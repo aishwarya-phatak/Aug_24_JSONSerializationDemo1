@@ -6,17 +6,33 @@
 //
 
 import UIKit
+import Kingfisher
 
 class ViewController: UIViewController {
 
+    @IBOutlet weak var usersTableView: UITableView!
+    
     var url : URL?
     var urlRequest : URLRequest?
     var urlSession : URLSession?
     var users : [User] = []
+    var reuseIdentifierForUserTableViewCell = "UserTableViewCell"
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        initializeViews()
+        registerXIBWithUsersTableView()
         jsonParsing()
+    }
+    
+    func initializeViews(){
+        usersTableView.delegate = self
+        usersTableView.dataSource = self
+    }
+    
+    func registerXIBWithUsersTableView(){
+        let uiNib = UINib(nibName: reuseIdentifierForUserTableViewCell, bundle: nil)
+        self.usersTableView.register(uiNib, forCellReuseIdentifier: reuseIdentifierForUserTableViewCell)
     }
     
     func jsonParsing(){
@@ -58,7 +74,36 @@ class ViewController: UIViewController {
                 self.users.append(newSwiftUserObject)
                 print("Array of Swift Objects -- \(self.users)")
             }
+            
+            DispatchQueue.main.async {
+                self.usersTableView.reloadData()
+            }
         })
         dataTask?.resume()
+    }
+}
+
+extension ViewController : UITableViewDataSource{
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        self.users.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let userTableViewCell = self.usersTableView.dequeueReusableCell(withIdentifier: reuseIdentifierForUserTableViewCell, for: indexPath) as! UserTableViewCell
+        
+        let imageUrl = URL(string: users[indexPath.row].photo)
+        userTableViewCell.userImageView.kf.setImage(with: imageUrl,placeholder: UIImage(named: "test_image_2"))
+        userTableViewCell.userNameLabel.text = users[indexPath.row].name
+        userTableViewCell.userEmailLabel.text = users[indexPath.row].email
+        userTableViewCell.userCompanyNameLabel.text = users[indexPath.row].company
+        
+        return userTableViewCell
+    }
+}
+
+extension ViewController : UITableViewDelegate{
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 140.0
     }
 }
